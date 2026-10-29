@@ -39,7 +39,7 @@ $('#logout').onclick = () => { Api.logout(); go('scan'); toast('Anda sudah kelua
 
 // ---------- SCANNER ----------
 let ovT = 0;
-function setSt(t) { setSt(t); $('#cam-hint').textContent = t; }
+function setSt(t) { $('#cam-st').textContent = t; $('#cam-hint').textContent = t; }
 function ov(type, title, info) {
   const o = $('#cam-ov'); o.className = 'ov ' + type; o.hidden = false;
   o.innerHTML = '<b>' + esc(title) + '</b><span>' + esc(info) + '</span>';

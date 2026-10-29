@@ -99,3 +99,7 @@ Status di bawah kamera sekarang menjelaskan penyebabnya. Cek berurutan:
 - Kamera kini dibuka **lebih dulu** (langsung terlihat), model wajah dimuat sesudahnya dengan status "Memuat model wajah…". Jika model gagal dimuat, kamera tetap tampil dan muncul pesan jelas.
 - Layar penuh memakai tampilan penuh-viewport yang andal; tombol **Layar penuh** (saat kamera sudah menyala) menambahkan layar penuh sistem.
 - Jika masih hitam: catat tulisan status di pojok kiri atas (mis. "Mencari wajah… 640×480") dan versi Android/Chrome, lalu laporkan.
+
+## Pembaruan v3.6 — perbaikan "Buka kamera" tidak bereaksi
+
+- Penyebab: kesalahan di `js/app.js` (fungsi status memanggil dirinya sendiri sehingga program berhenti sebelum kamera dibuka). Sudah diperbaiki; push ZIP terbaru lalu **Ctrl+Shift+R** (di HP: hapus cache / tutup-buka ulang tab).
