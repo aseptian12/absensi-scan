@@ -65,3 +65,10 @@ git push -u origin main
 - Scanner publik: **Buka kamera** → siswa menghadap layar. Model wajah dimuat dari CDN saat pertama dibuka (beberapa MB).
 - Pencocokan dilakukan di server; data wajah tidak pernah dikirim ke browser. Data wajah adalah **data biometrik** — minta persetujuan siswa/orang tua dan jangan bagikan spreadsheet.
 - Batasan: belum ada deteksi "orang hidup", jadi foto wajah di layar bisa mengelabui. Untuk penggunaan di bawah pengawasan guru ini cukup; kode barcode tetap tersedia sebagai cadangan.
+
+## Pembaruan v3.2
+
+- **Simpan wajah:** setelah 3 sampel terekam, tombol **Simpan wajah** menyimpan siswa + wajahnya langsung tanpa menutup dialog.
+- **Akun saya:** Panel Admin → tab **Akun saya** untuk ganti password (min. 8 karakter, huruf + angka). Sesi di perangkat lain otomatis keluar.
+- **Kamera belakang:** tombol **Kamera: Depan/Belakang** di halaman Scanner (juga dipakai saat merekam wajah).
+- Ganti `Kode.gs`, lalu **New version** di Manage deployments, dan push frontend yang baru.

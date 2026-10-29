@@ -29,7 +29,7 @@
     <div class="card">
       <div class="row between"><h3>Kamera</h3><span id="cam-st" class="b b-info">Siap</span></div>
       <video id="vid" playsinline muted></video>
-      <button id="cam" class="btn">Buka kamera</button>
+      <div class="row"><button id="cam" class="btn">Buka kamera</button><button id="cam-sw" type="button" class="btn ghost">Kamera: Depan</button></div>
     </div>
     <div class="card result" id="last">
       <small>Hasil scan terakhir</small>
@@ -49,7 +49,7 @@
   <div class="card row between"><div><h2>Panel admin</h2><small id="who" style="color:var(--mute)"></small></div><button class="btn ghost" id="logout">Keluar</button></div>
   <div class="tabs" id="tabs">
     <button data-tab="siswa" class="on">Siswa</button><button data-tab="manual">Absen manual</button>
-    <button data-tab="laporan">Laporan</button><button data-tab="set">Pengaturan</button>
+    <button data-tab="laporan">Laporan</button><button data-tab="set">Pengaturan</button><button data-tab="akun">Akun saya</button>
   </div>
 
   <div id="t-siswa" class="card tab">
@@ -88,6 +88,17 @@
       <p style="margin:16px 0 0"><button class="btn">Simpan pengaturan</button></p>
     </form>
   </div>
+
+  <div id="t-akun" class="card tab" hidden>
+    <h3>Akun saya</h3>
+    <p id="ak-info" style="margin:0 0 4px;color:var(--mute)"></p>
+    <form id="f-pw" style="max-width:460px">
+      <label>Password saat ini<input id="pw-0" type="password" autocomplete="current-password" required></label>
+      <label>Password baru (min. 8 karakter, huruf + angka)<input id="pw-1" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label>Ulangi password baru<input id="pw-2" type="password" autocomplete="new-password" minlength="8" required></label>
+      <p style="margin:16px 0 0"><button class="btn">Ubah password</button></p>
+    </form>
+  </div>
 </section>
 </main>
 
@@ -107,7 +118,7 @@
   <label>Kelas<input id="sk" required></label>
   <label>Kode barcode<span class="row" style="flex-wrap:nowrap"><input id="sc" required maxlength="40"><button type="button" class="btn ghost sm" id="gen">Acak</button></span></label>
   <label>No HP orang tua<input id="sh" inputmode="tel"></label>
-  <div class="row" style="margin-top:12px"><button type="button" class="btn ghost sm" id="enr">Rekam wajah (3 sampel)</button><small id="fs" style="color:var(--mute)"></small></div>
+  <div class="row" style="margin-top:12px"><button type="button" class="btn ghost sm" id="enr">Rekam wajah (3 sampel)</button><button type="button" class="btn sm" id="fsave" hidden>Simpan wajah</button><small id="fs" style="color:var(--mute)"></small></div>
   <video id="ev" playsinline muted hidden></video>
   <div class="row end" style="margin-top:16px"><button type="button" class="btn ghost" data-close>Batal</button><button class="btn">Simpan</button></div>
 </form></dialog>

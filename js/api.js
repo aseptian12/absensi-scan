@@ -33,6 +33,7 @@ const Api = (() => {
     post: (a, d) => call(a, d),
     admin: (a, d) => call(a, d, { auth: 1 }),
     async login(u, p) { const r = await call('auth.login', { username: u, password: p }); set({ token: r.data.token, exp: r.data.expires_at, admin: r.data.admin }); return r.data.admin; },
+    async ubahPassword(l, b) { const r = await call('auth.password', { password_lama: l, password_baru: b }, { auth: 1 }); set({ token: r.data.token, exp: r.data.expires_at, admin: s.admin }); return r; },
     logout: () => set(null),
     logged: () => !!s,
     me: () => s && s.admin

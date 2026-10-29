@@ -28,6 +28,7 @@ label input,label select{display:block;width:100%;margin-top:4px;font-weight:400
 .btn.bad{background:#FEE2E2;color:#B91C1C}
 .btn.sm{padding:5px 10px;font-size:.78rem}
 #vid,#ev{width:100%;aspect-ratio:4/3;object-fit:cover;transform:scaleX(-1);border-radius:12px;background:#0F172A;margin:10px 0}
+#vid.rear{transform:none}
 #reader{width:100%;border-radius:12px;overflow:hidden;margin:10px 0;background:#0F172A}
 #reader:empty{min-height:150px;display:flex;align-items:center;justify-content:center}
 #reader:empty::before{content:"Kamera belum aktif";color:#94A3B8;font-size:.85rem}

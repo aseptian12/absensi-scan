@@ -37,13 +37,13 @@ document.addEventListener('auth-expired', () => { toast('Sesi berakhir. Silakan 
 $('#logout').onclick = () => { Api.logout(); go('scan'); toast('Anda sudah keluar.'); };
 
 // ---------- SCANNER ----------
-let last = { c: '', t: 0 }, busy = false, pause = 0, loop = null, models = null;
+let facing = 'user', last = { c: '', t: 0 }, busy = false, pause = 0, loop = null, models = null;
 const MODEL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 function loadModels() {
   if (typeof faceapi === 'undefined') throw new Error('Library wajah gagal dimuat. Periksa internet.');
   return models = models || Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL), faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL)]);
 }
-async function openStream(v) { v.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 }, audio: false }); await v.play(); }
+async function openStream(v) { v.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: 640, height: 480 }, audio: false }); v.classList.toggle('rear', facing === 'environment'); await v.play(); }
 function closeStream(v) { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.srcObject = null; }
 const detect = v => faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: .6 })).withFaceLandmarks(true).withFaceDescriptor();
 async function startCam() {
@@ -58,6 +58,11 @@ async function startCam() {
 }
 function stopCam() { clearInterval(loop); loop = null; closeStream($('#vid')); $('#cam').textContent = 'Buka kamera'; $('#cam-st').textContent = 'Siap'; }
 $('#cam').onclick = () => { beep(1); $('#vid').srcObject ? stopCam() : startCam(); };
+$('#cam-sw').onclick = async () => {
+  facing = facing === 'user' ? 'environment' : 'user';
+  $('#cam-sw').textContent = 'Kamera: ' + (facing === 'user' ? 'Depan' : 'Belakang');
+  if ($('#vid').srcObject) { stopCam(); await startCam(); }
+};
 $('#f-manual').onsubmit = e => { e.preventDefault(); const v = $('#code').value; $('#code').value = ''; submit(v, true); };
 
 function show(d, type, text) {
@@ -105,7 +110,7 @@ function tab(n) {
   tabNow = n;
   $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === n));
   $$('.tab').forEach(t => t.hidden = t.id !== 't-' + n);
-  ({ siswa: loadSiswa, manual: loadSiswa, laporan: loadLap, set: loadSet })[n]();
+  ({ siswa: loadSiswa, manual: loadSiswa, laporan: loadLap, set: loadSet, akun: loadAkun })[n]();
 }
 $$('#tabs button').forEach(b => b.onclick = () => tab(b.dataset.tab));
 
@@ -136,22 +141,26 @@ $('#sb').onclick = e => {
 function openSiswa(s) {
   $('#st').textContent = s ? 'Edit siswa' : 'Tambah siswa'; $('#sm').value = s ? 'edit' : 'baru';
   $('#si').value = s ? s.id_siswa : ''; $('#si').readOnly = !!s; $('#sn').value = s ? s.nama_siswa : '';
-  $('#sk').value = s ? s.kelas : ''; $('#sc').value = s ? s.barcode_code : genCode(); $('#sh').value = s ? s.no_hp : ''; enr = [];
+  $('#sk').value = s ? s.kelas : ''; $('#sc').value = s ? s.barcode_code : genCode(); $('#sh').value = s ? s.no_hp : ''; enr = []; $('#fsave').hidden = true;
   $('#fs').textContent = s && s.ada_wajah ? 'Wajah sudah terdaftar. Rekam ulang untuk mengganti.' : 'Wajah belum terdaftar.';
   $('#dlg-siswa').showModal();
 }
 $('#add').onclick = () => openSiswa(null);
 $('#gen').onclick = () => $('#sc').value = genCode();
-$('#f-siswa').onsubmit = e => {
-  e.preventDefault();
-  run(e.submitter, async () => {
+function saveSiswa(btn, close) {
+  if (!$('#f-siswa').reportValidity()) return;
+  run(btn, async () => {
     const r = await Api.admin('siswa.save', { mode: $('#sm').value, id_siswa: $('#si').value, nama_siswa: $('#sn').value, kelas: $('#sk').value, barcode_code: $('#sc').value, no_hp: $('#sh').value, wajah: enr.length === 3 ? enr : undefined });
-    $('#dlg-siswa').close(); toast(r.message); loadSiswa();
+    toast(r.message); loadSiswa();
+    if (close) return $('#dlg-siswa').close();
+    $('#sm').value = 'edit'; $('#si').readOnly = true; $('#fsave').hidden = true; $('#fs').textContent = '✔ Wajah tersimpan.'; enr = [];
   });
-};
+}
+$('#f-siswa').onsubmit = e => { e.preventDefault(); saveSiswa(e.submitter, true); };
+$('#fsave').onclick = e => saveSiswa(e.currentTarget, false);
 let enr = [];
 $('#enr').onclick = async () => {
-  const st = $('#fs'), v = $('#ev'); enr = [];
+  const st = $('#fs'), v = $('#ev'); enr = []; $('#fsave').hidden = true;
   try { st.textContent = 'Memuat model…'; await loadModels(); await openStream(v); }
   catch (e) { closeStream(v); return st.textContent = 'Gagal: ' + e.message; }
   v.hidden = false;
@@ -161,7 +170,7 @@ $('#enr').onclick = async () => {
     if (r) enr.push(Array.from(r.descriptor, n => Math.round(n * 1e4) / 1e4));
     await new Promise(x => setTimeout(x, r ? 900 : 300));
   }
-  if (enr.length === 3) st.textContent = '✔ 3 sampel wajah terekam. Klik Simpan.';
+  if (enr.length === 3) { st.textContent = '✔ 3 sampel terekam. Klik Simpan wajah.'; $('#fsave').hidden = false; }
   closeStream(v); v.hidden = true;
 };
 $('#dlg-siswa').addEventListener('close', () => { closeStream($('#ev')); $('#ev').hidden = true; });
@@ -220,6 +229,14 @@ async function loadSet() {
 $('#f-set').onsubmit = e => {
   e.preventDefault();
   run(e.submitter, async () => toast((await Api.admin('pengaturan.save', { jam_masuk: $('#set-in').value, toleransi_menit: Number($('#set-tol').value), jam_pulang: $('#set-out').value, log_publik: $('#set-pub').checked })).message));
+};
+
+// ---------- ADMIN: AKUN SAYA ----------
+function loadAkun() { const m = Api.me(); $('#ak-info').textContent = 'Username: ' + m.username + ' • Nama: ' + m.nama + ' • Peran: ' + m.role; }
+$('#f-pw').onsubmit = e => {
+  e.preventDefault();
+  if ($('#pw-1').value !== $('#pw-2').value) return toast('Ulangi password tidak sama.', 'err');
+  run(e.submitter, async () => { const r = await Api.ubahPassword($('#pw-0').value, $('#pw-1').value); toast(r.message); e.target.reset(); });
 };
 
 // ---------- INIT ----------
