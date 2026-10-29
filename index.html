@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10B981">
+<title>Sistem Absensi Siswa Barcode</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310B981'/%3E%3Cpath d='M8 9v14M12 9v14M16 9v14M21 9v14M24 9v14' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top"><div class="wrap bar">
+  <div><b>Absensi Barcode Siswa</b><small id="today"></small></div>
+  <nav><button data-go="scan" class="on">Scanner</button><button data-go="admin">Panel Admin</button></nav>
+</div></header>
+<div id="warn" class="wrap warn" hidden>Alamat server belum diisi. Buka <code>js/config.js</code>, isi <code>GAS_URL</code> dengan URL Web App (berakhiran /exec), lalu push ulang.</div>
+
+<main class="wrap">
+<section id="v-scan">
+  <div class="card">
+    <h2>Absensi scan wajah</h2>
+    <p style="margin:0 0 12px;color:var(--mute)">Buka kamera lalu hadapkan wajah lurus ke layar. Cadangan: ketik kode barcode siswa.</p>
+    <form id="f-manual" class="row"><input id="code" placeholder="Cadangan: kode barcode siswa" autocomplete="off"><button class="btn">Kirim</button></form>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="row between"><h3>Kamera</h3><span id="cam-st" class="b b-info">Siap</span></div>
+      <video id="vid" playsinline muted></video>
+      <button id="cam" class="btn">Buka kamera</button>
+    </div>
+    <div class="card result" id="last">
+      <small>Hasil scan terakhir</small>
+      <h2 id="l-name">Menunggu scan…</h2>
+      <p id="l-info">Belum ada siswa yang di-scan.</p>
+      <div class="row"><span class="b b-ok">Tepat waktu <b id="s-hadir">0</b></span><span class="b b-late">Terlambat <b id="s-telat">0</b></span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row between"><h3>Absensi hari ini</h3><button class="btn ghost sm" id="refresh">Muat ulang</button></div>
+    <div class="tbl"><table><thead><tr><th>Waktu<th>Nama<th>Kelas<th>Status</thead><tbody id="logs"></tbody></table></div>
+    <small id="hid" style="color:var(--mute)" hidden>Daftar nama disembunyikan oleh admin.</small>
+  </div>
+</section>
+
+<section id="v-admin" hidden>
+  <div class="card row between"><div><h2>Panel admin</h2><small id="who" style="color:var(--mute)"></small></div><button class="btn ghost" id="logout">Keluar</button></div>
+  <div class="tabs" id="tabs">
+    <button data-tab="siswa" class="on">Siswa</button><button data-tab="manual">Absen manual</button>
+    <button data-tab="laporan">Laporan</button><button data-tab="set">Pengaturan</button>
+  </div>
+
+  <div id="t-siswa" class="card tab">
+    <div class="row between" style="margin-bottom:12px"><input id="q" type="search" placeholder="Cari nama / ID / kelas"><button class="btn" id="add">Tambah siswa</button></div>
+    <div class="tbl"><table><thead><tr><th>ID<th>Nama<th>Kelas<th>Kode / wajah<th>Aksi</thead><tbody id="sb"></tbody></table></div>
+  </div>
+
+  <div id="t-manual" class="card tab" hidden>
+    <h3>Absen manual</h3>
+    <form id="f-ma" style="max-width:460px">
+      <label>Siswa<select id="ma-s" required></select></label>
+      <label>Tanggal<input id="ma-t" type="date" required></label>
+      <label>Status<select id="ma-st"><option>Hadir<option>Terlambat<option>Izin<option>Sakit<option>Alpha</select></label>
+      <label>Keterangan<input id="ma-k" placeholder="Contoh: kartu rusak, izin dokter"></label>
+      <p style="margin:16px 0 0"><button class="btn">Simpan absensi</button></p>
+    </form>
+  </div>
+
+  <div id="t-laporan" class="card tab" hidden>
+    <form id="f-lap" class="row" style="align-items:flex-end;margin-bottom:12px">
+      <label style="margin:0">Dari<input id="l-a" type="date"></label>
+      <label style="margin:0">Sampai<input id="l-b" type="date"></label>
+      <button class="btn">Tampilkan</button><button type="button" class="btn ghost" id="csv">Unduh CSV</button>
+    </form>
+    <p id="sum" style="margin:0 0 8px"></p>
+    <div class="tbl"><table><thead><tr><th>Tanggal<th>Waktu<th>Nama<th>Kelas<th>Status<th>Keterangan</thead><tbody id="lb"></tbody></table></div>
+  </div>
+
+  <div id="t-set" class="card tab" hidden>
+    <h3>Jam sekolah</h3>
+    <form id="f-set" style="max-width:460px">
+      <label>Jam masuk<input id="set-in" type="time" required></label>
+      <label>Toleransi terlambat (menit)<input id="set-tol" type="number" min="0" max="180" required></label>
+      <label>Jam pulang<input id="set-out" type="time" required></label>
+      <label style="display:flex;gap:8px;align-items:center"><input id="set-pub" type="checkbox" style="width:auto;margin:0"> Tampilkan nama siswa di halaman scanner publik</label>
+      <p style="margin:16px 0 0"><button class="btn">Simpan pengaturan</button></p>
+    </form>
+  </div>
+</section>
+</main>
+
+<dialog id="dlg-login"><form id="f-login">
+  <h3>Login admin</h3>
+  <label>Username<input id="lu" autocomplete="username" required></label>
+  <label>Password<input id="lp" type="password" autocomplete="current-password" required></label>
+  <p id="le" class="err" role="alert"></p>
+  <div class="row end"><button type="button" class="btn ghost" data-close>Batal</button><button class="btn">Masuk</button></div>
+</form></dialog>
+
+<dialog id="dlg-siswa"><form id="f-siswa">
+  <h3 id="st">Tambah siswa</h3>
+  <input type="hidden" id="sm">
+  <label>ID siswa<input id="si" required maxlength="30"></label>
+  <label>Nama lengkap<input id="sn" required></label>
+  <label>Kelas<input id="sk" required></label>
+  <label>Kode barcode<span class="row" style="flex-wrap:nowrap"><input id="sc" required maxlength="40"><button type="button" class="btn ghost sm" id="gen">Acak</button></span></label>
+  <label>No HP orang tua<input id="sh" inputmode="tel"></label>
+  <div class="row" style="margin-top:12px"><button type="button" class="btn ghost sm" id="enr">Rekam wajah (3 sampel)</button><small id="fs" style="color:var(--mute)"></small></div>
+  <video id="ev" playsinline muted hidden></video>
+  <div class="row end" style="margin-top:16px"><button type="button" class="btn ghost" data-close>Batal</button><button class="btn">Simpan</button></div>
+</form></dialog>
+
+<dialog id="dlg-qr" class="center">
+  <h3 id="qn"></h3><small id="qi" style="color:var(--mute)"></small>
+  <div id="qbox"></div><code id="qc"></code>
+  <div class="row end noprint" style="margin-top:16px"><button class="btn ghost" data-close>Tutup</button><button class="btn ghost" id="qdl">Unduh PNG</button><button class="btn" id="qpr">Cetak</button></div>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
