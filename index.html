@@ -118,8 +118,9 @@
   <label>Kelas<input id="sk" required></label>
   <label>Kode barcode<span class="row" style="flex-wrap:nowrap"><input id="sc" required maxlength="40"><button type="button" class="btn ghost sm" id="gen">Acak</button></span></label>
   <label>No HP orang tua<input id="sh" inputmode="tel"></label>
-  <div class="row" style="margin-top:12px"><button type="button" class="btn ghost sm" id="enr">Rekam wajah (3 sampel)</button><button type="button" class="btn sm" id="fsave" hidden>Simpan wajah</button><small id="fs" style="color:var(--mute)"></small></div>
+  <div class="row" style="margin-top:12px"><button type="button" class="btn ghost sm" id="enr">Rekam wajah (3 sampel)</button><small id="fs" style="color:var(--mute)"></small></div>
   <video id="ev" playsinline muted hidden></video>
+  <button type="button" class="btn" id="fsave" style="width:100%;margin-top:8px" disabled>Simpan wajah</button>
   <div class="row end" style="margin-top:16px"><button type="button" class="btn ghost" data-close>Batal</button><button class="btn">Simpan</button></div>
 </form></dialog>
 

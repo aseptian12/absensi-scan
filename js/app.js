@@ -141,7 +141,7 @@ $('#sb').onclick = e => {
 function openSiswa(s) {
   $('#st').textContent = s ? 'Edit siswa' : 'Tambah siswa'; $('#sm').value = s ? 'edit' : 'baru';
   $('#si').value = s ? s.id_siswa : ''; $('#si').readOnly = !!s; $('#sn').value = s ? s.nama_siswa : '';
-  $('#sk').value = s ? s.kelas : ''; $('#sc').value = s ? s.barcode_code : genCode(); $('#sh').value = s ? s.no_hp : ''; enr = []; $('#fsave').hidden = true;
+  $('#sk').value = s ? s.kelas : ''; $('#sc').value = s ? s.barcode_code : genCode(); $('#sh').value = s ? s.no_hp : ''; enr = []; $('#fsave').disabled = true;
   $('#fs').textContent = s && s.ada_wajah ? 'Wajah sudah terdaftar. Rekam ulang untuk mengganti.' : 'Wajah belum terdaftar.';
   $('#dlg-siswa').showModal();
 }
@@ -153,14 +153,14 @@ function saveSiswa(btn, close) {
     const r = await Api.admin('siswa.save', { mode: $('#sm').value, id_siswa: $('#si').value, nama_siswa: $('#sn').value, kelas: $('#sk').value, barcode_code: $('#sc').value, no_hp: $('#sh').value, wajah: enr.length === 3 ? enr : undefined });
     toast(r.message); loadSiswa();
     if (close) return $('#dlg-siswa').close();
-    $('#sm').value = 'edit'; $('#si').readOnly = true; $('#fsave').hidden = true; $('#fs').textContent = '✔ Wajah tersimpan.'; enr = [];
+    $('#sm').value = 'edit'; $('#si').readOnly = true; $('#fsave').disabled = true; $('#fs').textContent = '✔ Wajah tersimpan.'; enr = [];
   });
 }
 $('#f-siswa').onsubmit = e => { e.preventDefault(); saveSiswa(e.submitter, true); };
 $('#fsave').onclick = e => saveSiswa(e.currentTarget, false);
 let enr = [];
 $('#enr').onclick = async () => {
-  const st = $('#fs'), v = $('#ev'); enr = []; $('#fsave').hidden = true;
+  const st = $('#fs'), v = $('#ev'); enr = []; $('#fsave').disabled = true;
   try { st.textContent = 'Memuat model…'; await loadModels(); await openStream(v); }
   catch (e) { closeStream(v); return st.textContent = 'Gagal: ' + e.message; }
   v.hidden = false;
@@ -170,7 +170,7 @@ $('#enr').onclick = async () => {
     if (r) enr.push(Array.from(r.descriptor, n => Math.round(n * 1e4) / 1e4));
     await new Promise(x => setTimeout(x, r ? 900 : 300));
   }
-  if (enr.length === 3) { st.textContent = '✔ 3 sampel terekam. Klik Simpan wajah.'; $('#fsave').hidden = false; }
+  if (enr.length === 3) { st.textContent = '✔ 3 sampel terekam. Klik Simpan wajah.'; $('#fsave').disabled = false; }
   closeStream(v); v.hidden = true;
 };
 $('#dlg-siswa').addEventListener('close', () => { closeStream($('#ev')); $('#ev').hidden = true; });
