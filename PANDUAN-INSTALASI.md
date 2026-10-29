@@ -93,3 +93,9 @@ Status di bawah kamera sekarang menjelaskan penyebabnya. Cek berurutan:
 - **Buka kamera** langsung masuk mode layar penuh; hasil scan (nama, status, jam) tampil sebagai kartu di atas video. Tombol **Layar penuh** masuk lagi kapan saja, **Keluar layar penuh** (atau Esc) kembali ke tampilan biasa dengan kamera tetap menyala.
 - **Ganti kamera** tersedia juga di mode layar penuh. Di iPhone/iPad, layar penuh memenuhi jendela browser (bukan layar sistem).
 - Hanya frontend yang berubah: push ZIP baru lalu **Ctrl+Shift+R**.
+
+## Pembaruan v3.5 — perbaikan kamera hitam di layar penuh
+
+- Kamera kini dibuka **lebih dulu** (langsung terlihat), model wajah dimuat sesudahnya dengan status "Memuat model wajah…". Jika model gagal dimuat, kamera tetap tampil dan muncul pesan jelas.
+- Layar penuh memakai tampilan penuh-viewport yang andal; tombol **Layar penuh** (saat kamera sudah menyala) menambahkan layar penuh sistem.
+- Jika masih hitam: catat tulisan status di pojok kiri atas (mis. "Mencari wajah… 640×480") dan versi Android/Chrome, lalu laporkan.

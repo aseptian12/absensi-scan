@@ -45,10 +45,12 @@ function ov(type, title, info) {
   o.innerHTML = '<b>' + esc(title) + '</b><span>' + esc(info) + '</span>';
   clearTimeout(ovT); ovT = setTimeout(() => o.hidden = true, 3500);
 }
-function setFull(on) {
-  $('#cam-box').classList.toggle('full', on); document.body.classList.toggle('nofs', on);
-  if (on && $('#cam-box').requestFullscreen) $('#cam-box').requestFullscreen().catch(() => {});
+let wantFull = false;
+function setFull(on, api) {
+  const box = $('#cam-box'); box.classList.toggle('full', on); document.body.classList.toggle('nofs', on);
+  if (on && api && box.requestFullscreen) box.requestFullscreen().catch(() => {});
   if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  setTimeout(() => { const v = $('#vid'); if (v.srcObject) v.play().catch(() => {}); }, 250); // pastikan video tetap berjalan
 }
 let facing = 'user', last = { c: '', t: 0 }, busy = false, pause = 0, loop = null, models = null;
 const MODEL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
@@ -70,9 +72,17 @@ async function detect(v) {
   } catch (e) { lastErr = e.message || String(e); console.error(e); return null; }
 }
 async function startCam() {
-  try { setSt('Memuat model…'); await loadModels(); await openStream($('#vid')); }
-  catch (e) { closeStream($('#vid')); setSt('Siap'); return toast(/^(Library|Model)/.test(e.message) ? e.message : 'Kamera tidak bisa dibuka. Izinkan akses kamera (situs harus HTTPS).', 'err'); }
-  $('#cam').textContent = 'Tutup kamera'; setSt('Mencari wajah…');
+  try { setSt('Membuka kamera…'); await openStream($('#vid')); }
+  catch (e) {
+    closeStream($('#vid')); setSt('Siap');
+    return toast(e.name === 'NotAllowedError' ? 'Izin kamera ditolak. Izinkan kamera di pengaturan browser.' : 'Kamera tidak bisa dibuka (' + (e.name || 'error') + '). Situs harus HTTPS.', 'err');
+  }
+  $('#cam').textContent = 'Tutup kamera';
+  if (wantFull) setFull(true);
+  setSt('Memuat model wajah…');
+  try { await loadModels(); } catch (e) { setSt('Model gagal dimuat'); return toast(e.message, 'err'); }
+  if (!$('#vid').srcObject) return;
+  setSt('Mencari wajah… ' + $('#vid').videoWidth + '×' + $('#vid').videoHeight);
   loop = setInterval(async () => {
     if (busy || Date.now() < pause || !$('#vid').srcObject) return;
     const r = await detect($('#vid'));
@@ -84,11 +94,11 @@ function stopCam(keep) { if (!keep) setFull(false); clearInterval(loop); loop = 
 $('#cam').onclick = async () => {
   beep(1);
   if ($('#vid').srcObject) return stopCam();
-  setFull(true); await startCam(); if (!$('#vid').srcObject) setFull(false);
+  wantFull = true; await startCam(); wantFull = false;
 };
 $('#cam-fs').onclick = async () => {
-  setFull(true);
-  if (!$('#vid').srcObject) { await startCam(); if (!$('#vid').srcObject) setFull(false); }
+  if ($('#vid').srcObject) return setFull(true, true);
+  wantFull = true; await startCam(); wantFull = false;
 };
 $('#cam-x').onclick = () => setFull(false);
 $('#cam-sw2').onclick = () => $('#cam-sw').click();
