@@ -81,3 +81,9 @@ Status di bawah kamera sekarang menjelaskan penyebabnya. Cek berurutan:
 3. Pastikan cahaya terang dari depan (bukan membelakangi jendela), wajah lurus, jarak ±40–60 cm, tanpa masker/topi menutup wajah.
 4. Jika muncul "Error deteksi: …", tekan F12 → Console dan catat pesannya.
 5. Tekan **Ctrl+Shift+R** agar browser memakai `app.js` terbaru.
+
+## Pembaruan v3.3
+
+- **Nama aplikasi:** Panel Admin → Pengaturan → *Nama aplikasi*. Nama tampil di header dan judul tab browser.
+- **Hapus di laporan:** tombol **Hapus** di tiap baris laporan (ada konfirmasi, tidak bisa dibatalkan).
+- Ganti `Kode.gs`, jalankan ulang **`setupAppEnvironment`** (menambah kolom `Nama_Aplikasi`), lalu **New version** di Manage deployments dan push frontend yang baru.

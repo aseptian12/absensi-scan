@@ -9,6 +9,7 @@ const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0
 const A = { siswa: [], lap: null };
 let tabNow = 'siswa';
 
+function applyName(n) { n = n || 'Absensi Barcode Siswa'; $('#app-name').textContent = n; document.title = n; try { localStorage.setItem('absensi.nama', n); } catch (e) {} }
 function toast(m, t) { const e = document.createElement('div'); e.className = 'toast ' + (t || ''); e.textContent = m; $('#toasts').append(e); setTimeout(() => e.remove(), 3500); }
 let ac;
 function beep(ok) {
@@ -100,6 +101,7 @@ async function submit(code, manual, face) {
 async function loadPublic() {
   try {
     const d = (await Api.get('public.data')).data;
+    applyName(d.pengaturan.nama_app);
     $('#s-hadir').textContent = d.statistik.hadir; $('#s-telat').textContent = d.statistik.terlambat;
     $('#logs').innerHTML = d.logs.length ? d.logs.map(l => '<tr><td>' + esc(l.waktu) + '<td>' + esc(l.nama_siswa) + '<td>' + esc(l.kelas) + '<td>' + badge(l.status)).join('')
       : empty(4, 'Belum ada absensi hari ini.');
@@ -214,10 +216,16 @@ function renderLap() {
   const l = A.lap.logs, c = {};
   l.forEach(x => c[x.status] = (c[x.status] || 0) + 1);
   $('#sum').innerHTML = Object.keys(c).map(k => badge(k) + ' ' + c[k]).join(' &nbsp; ') + (A.lap.terpotong ? ' — dibatasi 5.000 baris, persempit tanggal' : '');
-  $('#lb').innerHTML = l.length ? l.map(x => '<tr><td>' + esc(x.tanggal) + '<td>' + esc(x.waktu) + '<td>' + esc(x.nama_siswa) + '<td>' + esc(x.kelas) + '<td>' + badge(x.status) + '<td>' + esc(x.keterangan)).join('')
-    : empty(6, 'Tidak ada data pada rentang tanggal ini.');
+  $('#lb').innerHTML = l.length ? l.map(x => '<tr><td>' + esc(x.tanggal) + '<td>' + esc(x.waktu) + '<td>' + esc(x.nama_siswa) + '<td>' + esc(x.kelas) + '<td>' + badge(x.status) + '<td>' + esc(x.keterangan) + '<td><button class="btn bad sm" data-id="' + esc(x.id_log) + '">Hapus</button>').join('')
+    : empty(7, 'Tidak ada data pada rentang tanggal ini.');
 }
 $('#f-lap').onsubmit = e => { e.preventDefault(); loadLap(); };
+$('#lb').onclick = e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  const x = A.lap.logs.find(l => l.id_log === b.dataset.id); if (!x) return;
+  if (!confirm('Hapus catatan ' + x.nama_siswa + ' (' + x.status + ', ' + x.tanggal + ')? Tidak bisa dibatalkan.')) return;
+  run(b, async () => { toast((await Api.admin('absen.hapus', { id_log: x.id_log })).message); loadLap(); });
+};
 $('#csv').onclick = () => {
   const l = (A.lap && A.lap.logs) || [];
   if (!l.length) return toast('Tampilkan laporan yang ada isinya dulu.', 'err');
@@ -233,12 +241,15 @@ $('#csv').onclick = () => {
 async function loadSet() {
   await run(null, async () => {
     const c = (await Api.admin('pengaturan.get')).data;
-    $('#set-in').value = c.jam_masuk; $('#set-tol').value = c.toleransi_menit; $('#set-out').value = c.jam_pulang; $('#set-pub').checked = c.log_publik;
+    $('#set-nama').value = c.nama_app; $('#set-in').value = c.jam_masuk; $('#set-tol').value = c.toleransi_menit; $('#set-out').value = c.jam_pulang; $('#set-pub').checked = c.log_publik;
   });
 }
 $('#f-set').onsubmit = e => {
   e.preventDefault();
-  run(e.submitter, async () => toast((await Api.admin('pengaturan.save', { jam_masuk: $('#set-in').value, toleransi_menit: Number($('#set-tol').value), jam_pulang: $('#set-out').value, log_publik: $('#set-pub').checked })).message));
+  run(e.submitter, async () => {
+    const r = await Api.admin('pengaturan.save', { nama_app: $('#set-nama').value, jam_masuk: $('#set-in').value, toleransi_menit: Number($('#set-tol').value), jam_pulang: $('#set-out').value, log_publik: $('#set-pub').checked });
+    applyName($('#set-nama').value.trim()); toast(r.message);
+  });
 };
 
 // ---------- ADMIN: AKUN SAYA ----------
@@ -250,6 +261,7 @@ $('#f-pw').onsubmit = e => {
 };
 
 // ---------- INIT ----------
+try { applyName(localStorage.getItem('absensi.nama')); } catch (e) { applyName(); }
 const u = (window.APP_CONFIG || {}).GAS_URL || '';
 if (!u || /GANTI|XXXX/.test(u)) $('#warn').hidden = false;
 $('#today').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

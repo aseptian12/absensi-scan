@@ -13,7 +13,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap bar">
-  <div><b>Absensi Barcode Siswa</b><small id="today"></small></div>
+  <div><b id="app-name">Absensi Barcode Siswa</b><small id="today"></small></div>
   <nav><button data-go="scan" class="on">Scanner</button><button data-go="admin">Panel Admin</button></nav>
 </div></header>
 <div id="warn" class="wrap warn" hidden>Alamat server belum diisi. Buka <code>js/config.js</code>, isi <code>GAS_URL</code> dengan URL Web App (berakhiran /exec), lalu push ulang.</div>
@@ -75,12 +75,13 @@
       <button class="btn">Tampilkan</button><button type="button" class="btn ghost" id="csv">Unduh CSV</button>
     </form>
     <p id="sum" style="margin:0 0 8px"></p>
-    <div class="tbl"><table><thead><tr><th>Tanggal<th>Waktu<th>Nama<th>Kelas<th>Status<th>Keterangan</thead><tbody id="lb"></tbody></table></div>
+    <div class="tbl"><table><thead><tr><th>Tanggal<th>Waktu<th>Nama<th>Kelas<th>Status<th>Keterangan<th>Aksi</thead><tbody id="lb"></tbody></table></div>
   </div>
 
   <div id="t-set" class="card tab" hidden>
-    <h3>Jam sekolah</h3>
+    <h3>Pengaturan umum</h3>
     <form id="f-set" style="max-width:460px">
+      <label>Nama aplikasi (tampil di judul halaman)<input id="set-nama" maxlength="60" required></label>
       <label>Jam masuk<input id="set-in" type="time" required></label>
       <label>Toleransi terlambat (menit)<input id="set-tol" type="number" min="0" max="180" required></label>
       <label>Jam pulang<input id="set-out" type="time" required></label>
