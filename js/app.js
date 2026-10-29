@@ -38,6 +38,18 @@ document.addEventListener('auth-expired', () => { toast('Sesi berakhir. Silakan 
 $('#logout').onclick = () => { Api.logout(); go('scan'); toast('Anda sudah keluar.'); };
 
 // ---------- SCANNER ----------
+let ovT = 0;
+function setSt(t) { setSt(t); $('#cam-hint').textContent = t; }
+function ov(type, title, info) {
+  const o = $('#cam-ov'); o.className = 'ov ' + type; o.hidden = false;
+  o.innerHTML = '<b>' + esc(title) + '</b><span>' + esc(info) + '</span>';
+  clearTimeout(ovT); ovT = setTimeout(() => o.hidden = true, 3500);
+}
+function setFull(on) {
+  $('#cam-box').classList.toggle('full', on); document.body.classList.toggle('nofs', on);
+  if (on && $('#cam-box').requestFullscreen) $('#cam-box').requestFullscreen().catch(() => {});
+  if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
 let facing = 'user', last = { c: '', t: 0 }, busy = false, pause = 0, loop = null, models = null;
 const MODEL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 function loadModels() {
@@ -58,22 +70,33 @@ async function detect(v) {
   } catch (e) { lastErr = e.message || String(e); console.error(e); return null; }
 }
 async function startCam() {
-  try { $('#cam-st').textContent = 'Memuat model…'; await loadModels(); await openStream($('#vid')); }
-  catch (e) { closeStream($('#vid')); $('#cam-st').textContent = 'Siap'; return toast(/^(Library|Model)/.test(e.message) ? e.message : 'Kamera tidak bisa dibuka. Izinkan akses kamera (situs harus HTTPS).', 'err'); }
-  $('#cam').textContent = 'Tutup kamera'; $('#cam-st').textContent = 'Mencari wajah…';
+  try { setSt('Memuat model…'); await loadModels(); await openStream($('#vid')); }
+  catch (e) { closeStream($('#vid')); setSt('Siap'); return toast(/^(Library|Model)/.test(e.message) ? e.message : 'Kamera tidak bisa dibuka. Izinkan akses kamera (situs harus HTTPS).', 'err'); }
+  $('#cam').textContent = 'Tutup kamera'; setSt('Mencari wajah…');
   loop = setInterval(async () => {
     if (busy || Date.now() < pause || !$('#vid').srcObject) return;
     const r = await detect($('#vid'));
-    if (!busy) $('#cam-st').textContent = r ? 'Wajah terdeteksi…' : (lastErr ? 'Error deteksi' : 'Mencari wajah…');
+    if (!busy) setSt(r ? 'Wajah terdeteksi…' : (lastErr ? 'Error deteksi' : 'Mencari wajah…'));
     if (r && !busy && $('#vid').srcObject) submit(null, false, Array.from(r.descriptor));
   }, 700);
 }
-function stopCam() { clearInterval(loop); loop = null; closeStream($('#vid')); $('#cam').textContent = 'Buka kamera'; $('#cam-st').textContent = 'Siap'; }
-$('#cam').onclick = () => { beep(1); $('#vid').srcObject ? stopCam() : startCam(); };
+function stopCam(keep) { if (!keep) setFull(false); clearInterval(loop); loop = null; closeStream($('#vid')); $('#cam').textContent = 'Buka kamera'; setSt('Siap'); }
+$('#cam').onclick = async () => {
+  beep(1);
+  if ($('#vid').srcObject) return stopCam();
+  setFull(true); await startCam(); if (!$('#vid').srcObject) setFull(false);
+};
+$('#cam-fs').onclick = async () => {
+  setFull(true);
+  if (!$('#vid').srcObject) { await startCam(); if (!$('#vid').srcObject) setFull(false); }
+};
+$('#cam-x').onclick = () => setFull(false);
+$('#cam-sw2').onclick = () => $('#cam-sw').click();
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setFull(false); });
 $('#cam-sw').onclick = async () => {
   facing = facing === 'user' ? 'environment' : 'user';
   $('#cam-sw').textContent = 'Kamera: ' + (facing === 'user' ? 'Depan' : 'Belakang');
-  if ($('#vid').srcObject) { stopCam(); await startCam(); }
+  if ($('#vid').srcObject) { stopCam(true); await startCam(); }
 };
 $('#f-manual').onsubmit = e => { e.preventDefault(); const v = $('#code').value; $('#code').value = ''; submit(v, true); };
 
@@ -82,21 +105,22 @@ function show(d, type, text) {
   $('#l-name').textContent = s.nama_siswa;
   $('#l-info').textContent = 'Kelas ' + s.kelas + ' • ' + d.status + ' • ' + d.waktu;
   $('#last').className = 'card result ' + type;
+  ov(type, s.nama_siswa, d.status + ' • ' + d.waktu);
   toast(text, type === 'ok' ? '' : 'warn');
 }
 async function submit(code, manual, face) {
   code = String(code || '').trim();
   const n = Date.now();
   if ((!code && !face) || busy || (code && !manual && code === last.c && n - last.t < 4000)) return;
-  last = { c: code, t: n }; busy = true; $('#cam-st').textContent = 'Memproses…';
+  last = { c: code, t: n }; busy = true; setSt('Memproses…');
   try {
     const r = face ? await Api.post('scan.wajah', { descriptor: face }) : await Api.post('scan', { code: code });
     show(r.data, 'ok', r.data.student.nama_siswa + ' — ' + r.data.status); beep(1);
   } catch (e) {
     beep(0);
     if (e.code === 'DUPLICATE') show(e.payload.data, 'warn', e.message);
-    else { $('#last').className = 'card result err'; $('#l-name').textContent = 'Tidak dikenali'; $('#l-info').textContent = e.message; toast(e.message, 'err'); }
-  } finally { busy = false; pause = Date.now() + 3000; $('#cam-st').textContent = $('#vid').srcObject ? 'Mencari wajah…' : 'Siap'; loadPublic(); }
+    else { $('#last').className = 'card result err'; ov('err', 'Tidak dikenali', e.message); $('#l-name').textContent = 'Tidak dikenali'; $('#l-info').textContent = e.message; toast(e.message, 'err'); }
+  } finally { busy = false; pause = Date.now() + 3000; setSt($('#vid').srcObject ? 'Mencari wajah…' : 'Siap'); loadPublic(); }
 }
 async function loadPublic() {
   try {

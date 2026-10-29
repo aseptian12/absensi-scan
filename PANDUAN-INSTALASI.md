@@ -87,3 +87,9 @@ Status di bawah kamera sekarang menjelaskan penyebabnya. Cek berurutan:
 - **Nama aplikasi:** Panel Admin → Pengaturan → *Nama aplikasi*. Nama tampil di header dan judul tab browser.
 - **Hapus di laporan:** tombol **Hapus** di tiap baris laporan (ada konfirmasi, tidak bisa dibatalkan).
 - Ganti `Kode.gs`, jalankan ulang **`setupAppEnvironment`** (menambah kolom `Nama_Aplikasi`), lalu **New version** di Manage deployments dan push frontend yang baru.
+
+## Pembaruan v3.4 — kamera layar penuh
+
+- **Buka kamera** langsung masuk mode layar penuh; hasil scan (nama, status, jam) tampil sebagai kartu di atas video. Tombol **Layar penuh** masuk lagi kapan saja, **Keluar layar penuh** (atau Esc) kembali ke tampilan biasa dengan kamera tetap menyala.
+- **Ganti kamera** tersedia juga di mode layar penuh. Di iPhone/iPad, layar penuh memenuhi jendela browser (bukan layar sistem).
+- Hanya frontend yang berubah: push ZIP baru lalu **Ctrl+Shift+R**.

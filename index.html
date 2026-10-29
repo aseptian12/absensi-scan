@@ -28,8 +28,10 @@
   <div class="grid2">
     <div class="card">
       <div class="row between"><h3>Kamera</h3><span id="cam-st" class="b b-info">Siap</span></div>
-      <video id="vid" playsinline muted></video>
-      <div class="row"><button id="cam" class="btn">Buka kamera</button><button id="cam-sw" type="button" class="btn ghost">Kamera: Depan</button></div>
+      <div id="cam-box"><video id="vid" playsinline muted></video>
+        <div class="xbar"><span id="cam-hint" class="b b-info"></span><span class="row"><button type="button" class="btn ghost sm" id="cam-sw2">Ganti kamera</button><button type="button" class="btn sm" id="cam-x">Keluar layar penuh</button></span></div>
+        <div id="cam-ov" class="ov" hidden></div></div>
+      <div class="row"><button id="cam" class="btn">Buka kamera</button><button id="cam-sw" type="button" class="btn ghost">Kamera: Depan</button><button id="cam-fs" type="button" class="btn ghost">Layar penuh</button></div>
     </div>
     <div class="card result" id="last">
       <small>Hasil scan terakhir</small>
