@@ -72,3 +72,12 @@ git push -u origin main
 - **Akun saya:** Panel Admin → tab **Akun saya** untuk ganti password (min. 8 karakter, huruf + angka). Sesi di perangkat lain otomatis keluar.
 - **Kamera belakang:** tombol **Kamera: Depan/Belakang** di halaman Scanner (juga dipakai saat merekam wajah).
 - Ganti `Kode.gs`, lalu **New version** di Manage deployments, dan push frontend yang baru.
+
+## Wajah tidak terdeteksi?
+
+Status di bawah kamera sekarang menjelaskan penyebabnya. Cek berurutan:
+1. Buka lewat **https://** (GitHub Pages) dan izinkan kamera. Jangan buka `index.html` langsung dari file.
+2. Tunggu "Memuat model…" selesai (butuh internet; pertama kali beberapa MB).
+3. Pastikan cahaya terang dari depan (bukan membelakangi jendela), wajah lurus, jarak ±40–60 cm, tanpa masker/topi menutup wajah.
+4. Jika muncul "Error deteksi: …", tekan F12 → Console dan catat pesannya.
+5. Tekan **Ctrl+Shift+R** agar browser memakai `app.js` terbaru.

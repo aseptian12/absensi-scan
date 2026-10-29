@@ -41,18 +41,29 @@ let facing = 'user', last = { c: '', t: 0 }, busy = false, pause = 0, loop = nul
 const MODEL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 function loadModels() {
   if (typeof faceapi === 'undefined') throw new Error('Library wajah gagal dimuat. Periksa internet.');
-  return models = models || Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL), faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL)]);
+  return models = models || (async () => {
+    try { let ok = false; try { ok = await faceapi.tf.setBackend('webgl'); } catch (e) {} if (!ok) await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch (e) {}
+    await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL), faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL)]);
+  })().catch(e => { models = null; console.error(e); throw new Error('Model wajah gagal dimuat. Periksa internet lalu coba lagi.'); });
 }
 async function openStream(v) { v.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: 640, height: 480 }, audio: false }); v.classList.toggle('rear', facing === 'environment'); await v.play(); }
 function closeStream(v) { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.srcObject = null; }
-const detect = v => faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: .6 })).withFaceLandmarks(true).withFaceDescriptor();
+let lastErr = '';
+async function detect(v) {
+  if (!v.videoWidth) return null;
+  try {
+    lastErr = '';
+    return await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: .4 })).withFaceLandmarks(true).withFaceDescriptor();
+  } catch (e) { lastErr = e.message || String(e); console.error(e); return null; }
+}
 async function startCam() {
   try { $('#cam-st').textContent = 'Memuat model…'; await loadModels(); await openStream($('#vid')); }
-  catch (e) { closeStream($('#vid')); $('#cam-st').textContent = 'Siap'; return toast(/^Library/.test(e.message) ? e.message : 'Kamera tidak bisa dibuka. Izinkan akses kamera (situs harus HTTPS).', 'err'); }
+  catch (e) { closeStream($('#vid')); $('#cam-st').textContent = 'Siap'; return toast(/^(Library|Model)/.test(e.message) ? e.message : 'Kamera tidak bisa dibuka. Izinkan akses kamera (situs harus HTTPS).', 'err'); }
   $('#cam').textContent = 'Tutup kamera'; $('#cam-st').textContent = 'Mencari wajah…';
   loop = setInterval(async () => {
     if (busy || Date.now() < pause || !$('#vid').srcObject) return;
-    const r = await detect($('#vid')).catch(() => null);
+    const r = await detect($('#vid'));
+    if (!busy) $('#cam-st').textContent = r ? 'Wajah terdeteksi…' : (lastErr ? 'Error deteksi' : 'Mencari wajah…');
     if (r && !busy && $('#vid').srcObject) submit(null, false, Array.from(r.descriptor));
   }, 700);
 }
@@ -161,12 +172,11 @@ $('#fsave').onclick = e => saveSiswa(e.currentTarget, false);
 let enr = [];
 $('#enr').onclick = async () => {
   const st = $('#fs'), v = $('#ev'); enr = []; $('#fsave').disabled = true;
-  try { st.textContent = 'Memuat model…'; await loadModels(); await openStream(v); }
-  catch (e) { closeStream(v); return st.textContent = 'Gagal: ' + e.message; }
-  v.hidden = false;
+  try { st.textContent = 'Memuat model…'; await loadModels(); v.hidden = false; await openStream(v); }
+  catch (e) { closeStream(v); v.hidden = true; return st.textContent = 'Gagal: ' + (e.name === 'NotAllowedError' ? 'izin kamera ditolak' : e.message); }
   while (enr.length < 3 && v.srcObject) {
-    st.textContent = 'Hadapkan wajah ke kamera… (' + enr.length + '/3)';
-    const r = await detect(v).catch(() => null);
+    const r = await detect(v);
+    st.textContent = r ? 'Wajah terdeteksi, merekam… (' + (enr.length + 1) + '/3)' : (lastErr ? 'Error deteksi: ' + lastErr : 'Wajah belum terdeteksi. Dekatkan wajah, pastikan terang dan lurus ke kamera. (' + enr.length + '/3)');
     if (r) enr.push(Array.from(r.descriptor, n => Math.round(n * 1e4) / 1e4));
     await new Promise(x => setTimeout(x, r ? 900 : 300));
   }
